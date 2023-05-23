@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { useEffect, useState } from 'react';
 
 import API from "API";
 import GalleryPendingView from 'components/StatusView/GalleryPendingView';
@@ -7,113 +7,87 @@ import GalleryRejectedView from 'components/StatusView/GalleryRejectedView';
 
 const service = new API();
 
-class ImageGallery extends Component {
-    state = {
-        gallery: [],
-        page: 1,
-        showModal: false,
-        modalCard: null,
-        error: null,
-        status: 'idle',
-    };
+export default function ImageGallery({ query }) {
+    const [gallery, setGallery] = useState([]);
+    const [page, setPage] = useState(1);
+    const [showModal, setShowModal] = useState(false);
+    const [modalCard, setmodalCard] = useState(null);
+    const [error, setError] = useState(null);
+    const [status, setStatus] = useState('idle');
 
-    componentDidUpdate(prevProps, prevState) {
-        const prevQuery  = prevProps.query;
-        const query = this.props.query;
-
-        const prevPage = prevState.page;
-        const page = this.state.page;
-
-        if (prevQuery !== query) {
-            this.setState({status: "pending" })
-
+    useEffect(() => { 
+        if(query) {
+            setStatus('pending');
             try {
                 service.getQueryImages(query).then(({ data: { hits } }) => {
-                    this.setState({
-                        gallery: [...hits],
-                        status: "resolved",
-                    })
+                    setGallery([...hits]);
+                    setStatus('resolved');
                 })
             } catch(error) {
                 Promise.rejected(
                     new Error('Oopsie, something went wrong :( Try reload the page')
-                )
-                this.setState({
-                    error,
-                    status: "rejected",
-                });
+                );
+                setError(error);
+                setStatus('rejected');
             };
-        };
+        }
+    }, [query])
 
-        if (page  > prevPage) {
-            this.setState({status: "pending" })
+    useEffect(() => {
+        setPage(1)
+    }, [query])
 
+    useEffect(() => {    
+        if(page > 1) {
+            setStatus('pending');
             try {
                 service.getPageImages(page).then(({data: { hits }}) => {
-                    return this.setState(({ gallery }) => {
-                        return {
-                            gallery: [...gallery, ...hits],
-                            status: "resolved"
-                        }
-                    });
+                    setGallery(p => [...p, ...hits]);
+                    setStatus('resolved')
                 });
             } catch(error) {
                 Promise.rejected(
                     new Error('Oopsie, something went wrong :( Try reload the page')
-                )
-                this.setState({
-                    error,
-                    status: "rejected",
-                });
-            }
+                );
+                setError(error);
+                setStatus('rejected');
+            };
         };
+
+    }, [page]);
+
+    const toggleModal = () => {
+        setShowModal(s => !s)
     };
 
-    toggleModal = () => {
-        this.setState(({ showModal }) => {
-            return {
-                showModal: !showModal,
-            };
-        });
+    const handleBtnClick = () => {
+        setPage(s => s + 1);
     };
 
-    handleBtnClick = () => {
-        this.setState(({ page }) => {
-            return {
-                page: page + 1,
-            };
-        })
-    };
-
-    handleCardClick = (e) => {
-        const { gallery } = this.state
+    const handleCardClick = (e) => {
         const IMGid = Number(e.target.dataset.id);
 
 
         gallery.map((card) => {
             const { id } = card;
             if (id === IMGid) {
-                this.setState({
-                    modalCard: card,
-                    showModal: true,
-                })
+                setmodalCard(card)
+                setShowModal(true)
             };
             return card
         })
     };
 
-    render() {
-        const { status, error } = this.state;
-        const { query } = this.props
-
         if (status === "resolved") {
             return (
             <GalleryResolvedView
-            state={this.state}
+            gallery={gallery}
+            showModal={showModal}
+            modalCard={modalCard}
             query={query}
-            onCardClick={this.handleCardClick}
-            onBtnClick={this.handleBtnClick}
-            onModalClose={this.toggleModal}
+            onCardClick={handleCardClick}
+            onBtnClick={handleBtnClick}
+            onModalClose={toggleModal}
             />
             )
         };
@@ -131,7 +105,4 @@ class ImageGallery extends Component {
                 />
             )
         }
-    }
 };
-
-export default ImageGallery;
