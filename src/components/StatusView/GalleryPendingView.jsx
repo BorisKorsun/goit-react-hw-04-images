@@ -1,9 +1,7 @@
 import Loader from 'components/Loader';
 
-const GalleryPendingView = () => {
+export default function GalleryPendingView () {
     return (
         <Loader/>
     )
 };
-
-export default GalleryPendingView;

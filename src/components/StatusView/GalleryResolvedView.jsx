@@ -3,9 +3,9 @@ import Button from 'components/Button';
 import Modal from 'components/Modal';
 import ImageGalleryItem from 'components/ImageGallery/ImageGalleryItem';
 
-const GalleryResolvedView = (
+export default function GalleryResolvedView (
     { state: { gallery, showModal, modalCard }, onCardClick, onBtnClick, onModalClose, query }
-) => {
+) {
 
     return (
         <>
@@ -34,5 +34,3 @@ const GalleryResolvedView = (
         </>
     )
 };
-
-export default GalleryResolvedView;
